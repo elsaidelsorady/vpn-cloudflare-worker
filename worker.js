@@ -1,6 +1,39 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // معالجة الـ endpoints المحلية أولاً
+    if (pathname === '/v2ray-grpc/time-sync') {
+      if (request.method === 'POST') {
+        try {
+          const body = await request.json();
+          const serverTime = Date.now();
+          const timeDiff = serverTime - body.clientTime;
+          
+          return new Response(JSON.stringify({
+            synced: true,
+            timeDiff: timeDiff,
+            message: 'Time synced successfully',
+            serverTime: serverTime
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({
+            synced: false,
+            timeDiff: 999,
+            message: 'Failed to sync time'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
+    }
+
+    // معالجة الـ endpoints الأخرى عن طريق forwarding
     const originUrl = new URL(request.url);
     originUrl.hostname = 'vpn-server-production-7b23.up.railway.app';
     originUrl.protocol = 'https:';
