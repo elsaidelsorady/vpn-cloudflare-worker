@@ -1,12 +1,10 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const pathname = url.pathname;
+    const path = url.pathname;
 
-    // معالجة الـ endpoints المحلية
-    
     // 1. Time Sync Endpoint
-    if (pathname === '/v2ray-grpc/time-sync') {
+    if (path === '/v2ray-grpc/time-sync') {
       if (request.method === 'POST') {
         try {
           const body = await request.json();
@@ -20,7 +18,11 @@ export default {
             serverTime: serverTime
           }), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/grpc',
+              'Cache-Control': 'no-store',
+              'Access-Control-Allow-Origin': '*'
+            }
           });
         } catch (error) {
           return new Response(JSON.stringify({
@@ -29,63 +31,67 @@ export default {
             message: 'Failed to sync time'
           }), {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/grpc',
+              'Cache-Control': 'no-store'
+            }
           });
         }
       }
     }
 
     // 2. gRPC Handshake Endpoint
-    if (pathname === '/v2ray-grpc/grpc-handshake') {
+    if (path === '/v2ray-grpc/grpc-handshake') {
       if (request.method === 'POST') {
         try {
           const body = await request.json();
-          return new Response(JSON.stringify({
-            ok: true,
-            server: {
-              sni: 'stc.com.sa',
-              address: 'vpn-server-production-7b23.up.railway.app',
-              port: 443
-            },
-            uuid: body.uuid,
-            isp: body.isp,
-            message: 'gRPC handshake successful'
-          }), {
+          return new Response('gRPC Handshake OK', {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/grpc',
+              'Cache-Control': 'no-store',
+              'Access-Control-Allow-Origin': '*'
+            }
           });
         } catch (error) {
-          return new Response(JSON.stringify({
-            ok: false,
-            error: error.message
-          }), {
+          return new Response('gRPC Handshake Failed', {
             status: 400,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+              'Content-Type': 'application/grpc',
+              'Cache-Control': 'no-store'
+            }
           });
         }
       }
     }
 
     // 3. Multi-ISP Status Endpoint
-    if (pathname === '/v2ray-grpc/multi-isp-status') {
-      return new Response(JSON.stringify({
-        ok: true,
+    if (path === '/v2ray-grpc/multi-isp-status') {
+      const statusData = {
+        status: 'online',
+        can_bypass: true,
         isps: {
           stc: { active: true, latency: 45, connected: true },
           orange: { active: true, latency: 52, connected: true },
           etisalat: { active: true, latency: 48, connected: true },
           mobily: { active: true, latency: 50, connected: true }
         },
-        timestamp: new Date().toISOString()
-      }), {
+        timestamp: Date.now()
+      };
+      
+      return new Response(JSON.stringify(statusData), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/grpc',
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
     }
 
     // 4. FakeDNS Config Endpoint
-    if (pathname === '/v2ray-grpc/fakedns-config') {
-      return new Response(JSON.stringify({
+    if (path === '/v2ray-grpc/fakedns-config') {
+      const fakeDnsConfig = {
         ok: true,
         fakedns: {
           enabled: true,
@@ -93,9 +99,15 @@ export default {
             { ip: '198.18.0.0/15', size: 65535 }
           ]
         }
-      }), {
+      };
+      
+      return new Response(JSON.stringify(fakeDnsConfig), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/grpc',
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*'
+        }
       });
     }
 
@@ -130,6 +142,7 @@ export default {
       newResponse.headers.set('Access-Control-Allow-Origin', '*');
       newResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
       newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      newResponse.headers.set('Cache-Control', 'no-store');
       
       return newResponse;
     } catch (error) {
@@ -138,7 +151,10 @@ export default {
         message: error.message,
       }), {
         status: 502,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/grpc',
+          'Cache-Control': 'no-store'
+        },
       });
     }
   },
