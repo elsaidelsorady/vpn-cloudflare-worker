@@ -43,6 +43,9 @@ export default {
       });
     }
     
-    return new Response('Cloudflare Pages VPN Node Active', { status: 200 });
+    return new Response(JSON.stringify({ message: 'VPN Server is running 24/7', status: 'active' }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
   }
 };
