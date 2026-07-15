@@ -1,4 +1,4 @@
-name = "vpn-cloudflare-worker"
+name = "vpn-cloudflare-proxy"
 type = "service"
 main = "worker.js"
 compatibility_date = "2024-01-01"
